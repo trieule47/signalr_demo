@@ -13,13 +13,13 @@
     border: 1px solid black;
   }
   .container {
-    max-width: 500px;
+    max-width: 400px;
     margin: auto;
   }
 
   .msg_history{
-    height: 500px;
-    width: 500px;
+    height: 400px;
+    width: 400px;
     border: 2px solid black;
     display: block;
     overflow: scroll;

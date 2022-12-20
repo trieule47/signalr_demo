@@ -17,9 +17,9 @@ export class SignalRService {
             .catch( err => console.log("Error while starting connection: "+ err))
     }
 
-    public addTransferDataListener = (msgs: Message[], user: string) => {
+    public addTransferDataListener = (msgs: Message[], user: string, connectionIdList:string[], u) => {
         console.log(`data input: ${msgs}`);
-        this.hubConnection.on("ReceiveMessage", (message) =>{
+        this.hubConnection.on("ReceiveMessage", (message) => {
             console.log(`data: ${message}`);
             if (message.user !== user) {  
                 message.type = "received";  
@@ -28,14 +28,59 @@ export class SignalRService {
 
             console.log('1'+message);
         })
-    }
 
-    public invokeAction(action:string, message:Message){
-        this.hubConnection.invoke(action, message)
-        .catch(err=> {
-          return console.log(err.toString());
+        this.hubConnection.on("UserConnected", (connectionIds, connectionId) => {
+           console.log(connectionId);
+            u.id = connectionId;
+           if(connectionIdList.length > 0)
+           {
+            connectionIds.forEach(e1=>{
+                var trung = false;
+                connectionIdList.forEach(element => {
+                    if(e1 == element) {
+                       trung = true;
+                    }
+                   });
+                if(!trung){
+                    connectionIdList.push(e1);
+                }
+               })
+           } else {
+            connectionIds.forEach(element => {
+                connectionIdList.push(element);
+               });
+           }
+
+           
+           console.log(connectionIdList);
+
+        })
+
+        this.hubConnection.on("UserDisconnected", (connectionId) => {
+            var a = connectionIdList.filter(e => e!=connectionId)
+            console.log('aaa' + connectionIdList);
+            console.log("aa"+a);
         });
     }
+ 
+
+    public invokeAction(connectionId:string, message:Message){
+        console.log(connectionId)
+        if(connectionId == 'all')
+        {
+            this.hubConnection.invoke("SendMessage", message)
+            .catch(err=> {
+            return console.log(err.toString());
+            });
+        } else {
+            this.hubConnection.invoke("SendMessageToUser", connectionId, message)
+            .catch(err=> {
+            return console.log(err.toString());
+            });
+        }
+        
+    }
+
 
     constructor(){
     }

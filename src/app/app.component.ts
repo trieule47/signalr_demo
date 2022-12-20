@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewChecked, Component, OnInit } from '@angular/core';
 import { HubConnection, HubConnectionBuilder, LogLevel } from '@aspnet/signalr';
 import { Message } from './models/Message.model';
 import { HttpClient } from '@angular/common/http';
 import { SignalRService } from './services/signalr.service';
+import { ElementRef, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-root',
@@ -10,7 +11,7 @@ import { SignalRService } from './services/signalr.service';
   styleUrls: ['./app.component.css'],
   providers: []
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, AfterViewChecked  {
   title = 'app';
   // user: string;
   // message: string;
@@ -18,17 +19,22 @@ export class AppComponent implements OnInit {
   private _hubConnection: HubConnection;
   msgs: Message[] = [];
   message: Message;
+  selectedOption = "all";
+  connectionIds: string[] = []; 
 
   txtMessage: string = '';  
-  uniqueID: string = new Date().getTime().toString();  
+  uniqueID: string = new Date().getTime().toString();
+  user = {id: this.uniqueID, name:""};
+
+  @ViewChild('scrollMe') private myScrollContainer: ElementRef;
 
   constructor(private http: HttpClient, private signalRService : SignalRService) {
   }
 
   ngOnInit(): void {
     this.signalRService.startConnection();
-    // this.signalRService.addTransferDataListener(this.msgs);
-    this.signalRService.addTransferDataListener(this.msgs, this.uniqueID);
+    this.signalRService.addTransferDataListener(this.msgs, this.uniqueID, this.connectionIds, this.user);
+    this.scrollToBottom();
 
   }
   
@@ -39,7 +45,6 @@ export class AppComponent implements OnInit {
   }
 
   public sendMessage(){
-    // this.signalRService.invokeAction("SendMessage", this.user, this.message);
     if (this.txtMessage) {
       this.message = new Message();
       this.message.user = this.uniqueID;  
@@ -47,10 +52,20 @@ export class AppComponent implements OnInit {
       this.message.message = this.txtMessage;  
       this.message.date = new Date();  
       this.msgs.push(this.message);  
-      this.signalRService.invokeAction("SendMessage", this.message);  
+      this.signalRService.invokeAction(this.selectedOption,this.message);  
       this.txtMessage = '';  
     } 
     
+  }
+
+  ngAfterViewChecked() {        
+    this.scrollToBottom();        
+  } 
+
+  scrollToBottom(): void {
+      try {
+          this.myScrollContainer.nativeElement.scrollTop = this.myScrollContainer.nativeElement.scrollHeight;
+      } catch(err) { }                 
   }
 
   showSuccess() {
